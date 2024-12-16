@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, Request, HTTPException
 from PIL import Image
 from starlette.middleware.cors import CORSMiddleware
 
-from src.colpali import run_image
+from src.colpali import run_image, run_query
 import io
 import time
 
@@ -56,5 +56,14 @@ async def emb_image(image: UploadFile):
 
     # Pass the PIL image to run_image
     result = run_image(pil_image)
+
+    return result
+
+
+@app.post("/text")
+async def emb_query(text):
+
+    # Pass the PIL image to run_query
+    result = run_query(text)
 
     return result
