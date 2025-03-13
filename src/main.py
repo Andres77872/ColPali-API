@@ -55,7 +55,7 @@ async def emb_image(image: UploadFile):
     pil_image = Image.open(io.BytesIO(image_bytes))
 
     # Pass the PIL image to run_image
-    result = run_image(pil_image)
+    result = await run_image(pil_image)
 
     return result
 

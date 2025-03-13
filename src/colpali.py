@@ -1,14 +1,21 @@
 from io import BytesIO
-from typing import cast
-import requests
 from queue import Queue
-from PIL import Image
-from colpali_engine.models import ColQwen2, ColQwen2Processor
-from qdrant_client import QdrantClient
+from typing import cast
+
+import requests
 import torch
+from PIL import Image
+# from colpali_engine.models import ColQwen2, ColQwen2Processor
+# from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
+from colpali_engine.models import ColPali, ColPaliProcessor
+from qdrant_client import QdrantClient
+from transformers.utils.import_utils import is_flash_attn_2_available
 
 # Model name
-model_name = "vidore/colqwen2-v1.0"
+# model_name = "vidore/colqwen2-v1.0"
+model_name = "vidore/colpali-v1.3"
+# model_name = "vidore/colqwen2.5-v0.2"
+# model_name = "Metric-AI/ColQwen2.5-3b-multilingual-v1.0"
 collection_name = "arxiv_colqwen2_10"
 qdrant_client = QdrantClient("192.168.1.90", port=6334, prefer_grpc=True)
 
@@ -21,16 +28,14 @@ gpu_pool = {}
 
 # Load the model and processor on each GPU
 for device in available_devices:
-    model = cast(
-        ColQwen2,
-        ColQwen2.from_pretrained(
-            model_name,
-            torch_dtype=torch.bfloat16,
-            device_map=device,
-        ),
+    model = ColPali.from_pretrained(
+        model_name,
+        torch_dtype=torch.bfloat16,
+        device_map=device,  # or "mps" if on Apple Silicon
+        attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
     ).eval()
 
-    processor = cast(ColQwen2Processor, ColQwen2Processor.from_pretrained(model_name))
+    processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(model_name))
 
     gpu_pool[device] = {"model": model, "processor": processor}
 
@@ -49,7 +54,7 @@ def load_image_from_url(url: str) -> Image.Image:
 
 
 # Function to scale image
-def scale_image(image: Image.Image, new_height: int = 1024) -> Image.Image:
+def scale_image(image: Image.Image, new_height: int = 3584) -> Image.Image:
     width, height = image.size
     aspect_ratio = width / height
     new_width = int(new_height * aspect_ratio)
@@ -57,7 +62,7 @@ def scale_image(image: Image.Image, new_height: int = 1024) -> Image.Image:
 
 
 # Helper function to run inference on images
-def run_image(image: Image.Image):
+async def run_image(image: Image.Image):
     # Get the next available GPU
     device = gpu_queue.get()
     try:
@@ -67,12 +72,12 @@ def run_image(image: Image.Image):
         processor = gpu_pool[device]["processor"]
 
         # Preprocess inputs
-        batch_images = processor.process_images([scale_image(image, new_height=1024)]).to(device)
-
+        batch_images = processor.process_images([scale_image(image, new_height=3584)]).to(device)
         # Forward passes
         with torch.no_grad():
             image_embeddings = model.forward(**batch_images)
             vector = image_embeddings[0].cpu().float().numpy().tolist()
+            print('embedding', len(vector))
     finally:
         # Return GPU to the queue
         gpu_queue.put(device)
