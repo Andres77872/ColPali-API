@@ -1,11 +1,18 @@
-from fastapi import FastAPI, UploadFile, Request, HTTPException
+import asyncio
+import functools
+import io
+import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import List
+
 from PIL import Image
+from fastapi import FastAPI, UploadFile, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 
 from src.colpali import run_image, run_query
-import io
-import time
 
+# Start a thread executor at application startup with max_workers = num of GPUs
+executor = ThreadPoolExecutor(max_workers=3)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -15,15 +22,16 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
 
     if request.method == 'POST':
-        if int(request.headers['content-length']) > 8388608:
+        if int(request.headers['content-length']) > 8388608 * 4:
             process_time = time.time() - start_time
             raise HTTPException(status_code=413,
-                                detail="Max sie 8 mib",
+                                detail="Max sie 32 mib",
                                 headers={
                                     'X-Process-Time': str(process_time),
                                     'Access-Control-Allow-Origin': '*'
@@ -36,6 +44,7 @@ async def add_process_time_header(request: Request, call_next):
 
     return response
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -47,22 +56,21 @@ async def say_hello(name: str):
 
 
 @app.post("/image")
-async def emb_image(image: UploadFile):
-    # Read the contents of the uploaded file
-    image_bytes = await image.read()
+async def emb_image(images: List[UploadFile]):
+    pil_images = []
+    for image in images:
+        image_bytes = await image.read()
+        pil_image = Image.open(io.BytesIO(image_bytes))
+        pil_images.append(pil_image)
 
-    # Open the image using PIL
-    pil_image = Image.open(io.BytesIO(image_bytes))
-
-    # Pass the PIL image to run_image
-    result = await run_image(pil_image)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(executor, functools.partial(run_image, pil_images))
 
     return result
 
 
 @app.post("/text")
 async def emb_query(text):
-
     # Pass the PIL image to run_query
     result = run_query(text)
 
