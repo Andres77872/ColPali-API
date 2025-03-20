@@ -8,7 +8,6 @@ from PIL import Image
 # from colpali_engine.models import ColQwen2, ColQwen2Processor
 # from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
 from colpali_engine.models import ColPali, ColPaliProcessor
-from qdrant_client import QdrantClient
 from transformers.utils.import_utils import is_flash_attn_2_available
 
 # Model name
@@ -17,7 +16,6 @@ model_name = "vidore/colpali-v1.3"
 # model_name = "vidore/colqwen2.5-v0.2"
 # model_name = "Metric-AI/ColQwen2.5-3b-multilingual-v1.0"
 collection_name = "arxiv_colqwen2_10"
-qdrant_client = QdrantClient("192.168.1.90", port=6334, prefer_grpc=True)
 
 # Detect all available GPUs
 available_devices = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
@@ -62,28 +60,23 @@ def scale_image(image: Image.Image, new_height: int = 3584) -> Image.Image:
 
 
 # Helper function to run inference on images
-async def run_image(image: Image.Image):
-    # Get the next available GPU
-    device = gpu_queue.get()
+def run_image(images: list[Image.Image]):
+    device = gpu_queue.get()  # Pick available GPU
     try:
-        print('running on device: ', device, '...')
-        # Get the model and processor associated with this GPU
+        #print(f'Running on device: {device}')
         model = gpu_pool[device]["model"]
         processor = gpu_pool[device]["processor"]
 
-        # Preprocess inputs
-        batch_images = processor.process_images([scale_image(image, new_height=3584)]).to(device)
-        # Forward passes
-        with torch.no_grad():
-            image_embeddings = model.forward(**batch_images)
-            vector = image_embeddings[0].cpu().float().numpy().tolist()
-            print('embedding', len(vector))
-    finally:
-        # Return GPU to the queue
-        gpu_queue.put(device)
-        print('done running on device: ', device, '...')
+        batch_images = processor.process_images([scale_image(x, new_height=3584) for x in images]).to(device)
 
-    return vector
+        with torch.no_grad():
+            embedding = model.forward(**batch_images).cpu().float().numpy().tolist()
+
+        print(f'Finished processing on device: {device}')
+    finally:
+        gpu_queue.put(device)  # GPU is free again
+
+    return embedding
 
 
 # Helper function to run inference on text (queries)
