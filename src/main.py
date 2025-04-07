@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from PIL import Image
-from fastapi import FastAPI, UploadFile, Request, HTTPException
+from fastapi import FastAPI, UploadFile, Request, HTTPException, File
 from starlette.middleware.cors import CORSMiddleware
 
 from src.colpali import run_image, run_query
@@ -56,16 +56,21 @@ async def say_hello(name: str):
 
 
 @app.post("/image")
-async def emb_image(images: List[UploadFile]):
+async def emb_image(images: List[UploadFile] = File(...),
+                    size: int = File(3584),
+                    pool_factor: int = File(2)):
     pil_images = []
     for image in images:
         image_bytes = await image.read()
         pil_image = Image.open(io.BytesIO(image_bytes))
         pil_images.append(pil_image)
-
+    # print(size)
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(executor, functools.partial(run_image, pil_images))
-
+    result = await loop.run_in_executor(executor,
+                                        functools.partial(run_image,
+                                                          pil_images,
+                                                          size=size,
+                                                          pool_factor=pool_factor))
     return result
 
 
