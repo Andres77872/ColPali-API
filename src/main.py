@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from PIL import Image
-from fastapi import FastAPI, UploadFile, Request, HTTPException, File
+from fastapi import FastAPI, UploadFile, Request, HTTPException, File, Form
 from starlette.middleware.cors import CORSMiddleware
 
 from src.colpali import run_image, run_query
@@ -28,7 +28,7 @@ async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
 
     if request.method == 'POST':
-        if int(request.headers['content-length']) > 8388608 * 4:
+        if int(request.headers['content-length']) > 8388608 * 32:
             process_time = time.time() - start_time
             raise HTTPException(status_code=413,
                                 detail="Max sie 32 mib",
@@ -64,7 +64,23 @@ async def emb_image(images: List[UploadFile] = File(...),
         image_bytes = await image.read()
         pil_image = Image.open(io.BytesIO(image_bytes))
         pil_images.append(pil_image)
-    # print(size)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(executor,
+                                        functools.partial(run_image,
+                                                          pil_images,
+                                                          size=size,
+                                                          pool_factor=pool_factor))
+    return result
+
+
+@app.post("/image_local")
+async def emb_image_local(images: List[str] = Form,
+                          size: int = Form(3584),
+                          pool_factor: int = Form(2)):
+    pil_images = []
+    for image in images:
+        pil_image = Image.open(image)
+        pil_images.append(pil_image)
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(executor,
                                         functools.partial(run_image,
