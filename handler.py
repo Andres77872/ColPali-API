@@ -26,7 +26,7 @@ torch.cuda.empty_cache()
 
 class ColPaliModelHandler:
     def __init__(self):
-        self.model_name = "vidore/colpali-v1.3"
+        self.model_name = "vidore/colqwen2.5-v0.2"
         self.gpu_pool = {}
         self.gpu_queue = Queue()
         self.available_devices = []
