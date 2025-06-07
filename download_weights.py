@@ -1,7 +1,7 @@
 import os
 
 import requests
-from transformers import AutoModel, AutoProcessor
+from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
 
 
 def download_file(url, local_path, chunk_size=8192):
@@ -62,15 +62,10 @@ def download_colpali_models():
         try:
             print(f"\nDownloading {model_name} ({model_id})...")
 
-            # Create model directory
-            model_dir = f"./models/{model_name}"
-            os.makedirs(model_dir, exist_ok=True)
-
             # Download model
             print(f"Downloading model weights for {model_id}...")
-            model = AutoModel.from_pretrained(
+            model = ColQwen2_5.from_pretrained(
                 model_id,
-                cache_dir=model_dir,
                 local_files_only=False,
                 trust_remote_code=True
             )
@@ -78,9 +73,8 @@ def download_colpali_models():
 
             # Download processor
             print(f"Downloading processor for {model_id}...")
-            processor = AutoProcessor.from_pretrained(
+            processor = ColQwen2_5_Processor.from_pretrained(
                 model_id,
-                cache_dir=model_dir,
                 local_files_only=False,
                 trust_remote_code=True
             )
@@ -88,8 +82,7 @@ def download_colpali_models():
 
             downloaded_models.append({
                 "name": model_name,
-                "model_id": model_id,
-                "path": model_dir
+                "model_id": model_id
             })
 
             # Only download the default model for now to save space
@@ -141,34 +134,6 @@ def verify_installation():
         return False
 
 
-def create_config_file():
-    """
-    Create a configuration file for the ColPali worker
-    """
-    config = {
-        "model_name": "vidore/colpali-v1.3",
-        "default_size": 3584,
-        "default_pool_factor": 2,
-        "num_cpu_cores": 80,
-        "use_flash_attention": True,
-        "supported_image_formats": [".jpg", ".jpeg", ".png", ".bmp", ".tiff"],
-        "max_batch_size": 8,
-        "timeout": 300
-    }
-
-    config_path = "./config.json"
-
-    try:
-        import json
-        with open(config_path, 'w') as f:
-            json.dump(config, f, indent=2)
-        print(f"Configuration file created: {config_path}")
-        return config_path
-    except Exception as e:
-        print(f"Error creating config file: {e}")
-        return None
-
-
 def get_colpali_models():
     """
     Main function to download and setup ColPali models and dependencies
@@ -178,19 +143,13 @@ def get_colpali_models():
     # Download models
     downloaded_models = download_colpali_models()
 
-    # Create config file
-    config_path = create_config_file()
-
     # Verify installation
     if verify_installation():
         print("\n🎉 ColPali setup completed successfully!")
 
         print("\nDownloaded models:")
         for model in downloaded_models:
-            print(f"  - {model['name']}: {model['path']}")
-
-        if config_path:
-            print(f"Configuration: {config_path}")
+            print(f"  - {model['name']}")
 
         print("\nYou can now run the ColPali RunPod worker!")
 
