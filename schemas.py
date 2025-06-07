@@ -1,6 +1,6 @@
 INPUT_SCHEMA = {
     "operation_type": {
-        "type": "string",
+        "type": str,
         'required': True,
         "default": None
     },
