@@ -74,7 +74,7 @@ async def emb_image(images: List[UploadFile] = File(...),
 
 
 @app.post("/image_local")
-async def emb_image_local(images: List[str] = Form,
+async def emb_image_local(images: List[str] = Form(),
                           size: int = Form(3584),
                           pool_factor: int = Form(2)):
     pil_images = []
