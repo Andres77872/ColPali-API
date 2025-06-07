@@ -11,7 +11,7 @@ import requests
 import torch
 from PIL import Image
 from colpali_engine.compression.token_pooling import HierarchicalTokenPooler
-from colpali_engine.models import ColPali, ColPaliProcessor
+from colpali_engine.models import ColQwen2_5, ColQwen2_5_Processor
 from transformers.utils.import_utils import is_flash_attn_2_available
 from runpod.serverless.utils.rp_validator import validate
 
@@ -44,7 +44,7 @@ class ColPaliModelHandler:
         model_dir = f"./models/{self.model_name}"
         # Load the model and processor on each GPU
         for device in self.available_devices:
-            model = ColPali.from_pretrained(
+            model = ColQwen2_5.from_pretrained(
                 self.model_name,
                 cache_dir=model_dir,
                 local_files_only=False,
@@ -54,7 +54,7 @@ class ColPaliModelHandler:
                 attn_implementation="flash_attention_2" if is_flash_attn_2_available() else None,
             ).eval()
 
-            processor = cast(ColPaliProcessor, ColPaliProcessor.from_pretrained(self.model_name))
+            processor = cast(ColQwen2_5_Processor, ColQwen2_5_Processor.from_pretrained(self.model_name))
             self.gpu_pool[device] = {"model": model, "processor": processor}
 
         print("Model and processor loaded on all GPUs!")
