@@ -44,7 +44,7 @@ class ColPaliModelHandler:
         for device in self.available_devices:
             model = ColQwen2_5.from_pretrained(
                 self.model_name,
-                local_files_only=False,
+                local_files_only=True,
                 trust_remote_code=True,
                 torch_dtype=torch.float32 if device == "cpu" else torch.bfloat16,
                 device_map=device,
@@ -53,7 +53,7 @@ class ColPaliModelHandler:
 
             processor = cast(ColQwen2_5_Processor, ColQwen2_5_Processor.from_pretrained(
                 self.model_name,
-                local_files_only=False,
+                local_files_only=True,
                 trust_remote_code=True,
             ))
             self.gpu_pool[device] = {"model": model, "processor": processor}
