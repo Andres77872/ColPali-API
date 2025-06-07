@@ -1,129 +1,31 @@
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "initial_id",
-   "metadata": {
-    "collapsed": true
-   },
-   "outputs": [],
-   "source": [
-    "INPUT_SCHEMA = {\n",
-    "    \"type\": \"object\",\n",
-    "    \"properties\": {\n",
-    "        \"operation_type\": {\n",
-    "            \"type\": \"string\",\n",
-    "            \"enum\": [\"embed_images\", \"embed_queries\", \"search\"],\n",
-    "            \"description\": \"Type of operation to perform\"\n",
-    "        },\n",
-    "        \"images\": {\n",
-    "            \"type\": \"array\",\n",
-    "            \"items\": {\n",
-    "                \"type\": \"string\",\n",
-    "                \"description\": \"Image URLs or base64 encoded images\"\n",
-    "            },\n",
-    "            \"description\": \"List of images for embedding (URLs or base64)\"\n",
-    "        },\n",
-    "        \"queries\": {\n",
-    "            \"type\": \"array\",\n",
-    "            \"items\": {\n",
-    "                \"type\": \"string\"\n",
-    "            },\n",
-    "            \"description\": \"List of text queries for embedding or search\"\n",
-    "        },\n",
-    "        \"size\": {\n",
-    "            \"type\": \"integer\",\n",
-    "            \"minimum\": 1,\n",
-    "            \"maximum\": 2048,\n",
-    "            \"default\": 1024,\n",
-    "            \"description\": \"Output embedding size\"\n",
-    "        },\n",
-    "        \"pool_factor\": {\n",
-    "            \"type\": \"number\",\n",
-    "            \"minimum\": 0.1,\n",
-    "            \"maximum\": 10.0,\n",
-    "            \"default\": 1.0,\n",
-    "            \"description\": \"Pooling factor for image processing\"\n",
-    "        },\n",
-    "        \"max_length\": {\n",
-    "            \"type\": \"integer\",\n",
-    "            \"minimum\": 1,\n",
-    "            \"maximum\": 8192,\n",
-    "            \"default\": 2048,\n",
-    "            \"description\": \"Maximum sequence length for text processing\"\n",
-    "        },\n",
-    "        \"normalize\": {\n",
-    "            \"type\": \"boolean\",\n",
-    "            \"default\": True,\n",
-    "            \"description\": \"Whether to normalize embeddings\"\n",
-    "        },\n",
-    "        \"batch_size\": {\n",
-    "            \"type\": \"integer\",\n",
-    "            \"minimum\": 1,\n",
-    "            \"maximum\": 32,\n",
-    "            \"default\": 1,\n",
-    "            \"description\": \"Batch size for processing\"\n",
-    "        },\n",
-    "        \"top_k\": {\n",
-    "            \"type\": \"integer\",\n",
-    "            \"minimum\": 1,\n",
-    "            \"maximum\": 100,\n",
-    "            \"default\": 10,\n",
-    "            \"description\": \"Number of top results to return for search operations\"\n",
-    "        }\n",
-    "    },\n",
-    "    \"required\": [\"operation_type\"],\n",
-    "    \"additionalProperties\": False,\n",
-    "    \"allOf\": [\n",
-    "        {\n",
-    "            \"if\": {\n",
-    "                \"properties\": {\"operation_type\": {\"const\": \"embed_images\"}}\n",
-    "            },\n",
-    "            \"then\": {\n",
-    "                \"required\": [\"images\"]\n",
-    "            }\n",
-    "        },\n",
-    "        {\n",
-    "            \"if\": {\n",
-    "                \"properties\": {\"operation_type\": {\"const\": \"embed_queries\"}}\n",
-    "            },\n",
-    "            \"then\": {\n",
-    "                \"required\": [\"queries\"]\n",
-    "            }\n",
-    "        },\n",
-    "        {\n",
-    "            \"if\": {\n",
-    "                \"properties\": {\"operation_type\": {\"const\": \"search\"}}\n",
-    "            },\n",
-    "            \"then\": {\n",
-    "                \"required\": [\"queries\", \"images\"]\n",
-    "            }\n",
-    "        }\n",
-    "    ]\n",
-    "}"
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python 3",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 2
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython2",
-   "version": "2.7.6"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 5
+INPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "operation_type": {
+            "type": "string",
+            "enum": ["embed_images", "embed_query"],
+            "description": "Type of operation to perform"
+        },
+        "images": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of image URLs or base64 encoded images (for embed_images operation)"
+        },
+        "queries": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of query strings (for embed_query operation)"
+        },
+        "size": {
+            "type": "integer",
+            "default": 3584,
+            "description": "Image resize height"
+        },
+        "pool_factor": {
+            "type": "integer",
+            "default": 2,
+            "description": "Token pooling factor"
+        }
+    },
+    "required": ["operation_type"]
 }
