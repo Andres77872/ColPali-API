@@ -1,0 +1,11 @@
+{
+  "input": {
+    "operation_type": "embed_images",
+    "images": [
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Mauritius_kestrel_%28Falco_punctatus%29.jpg/500px-Mauritius_kestrel_%28Falco_punctatus%29.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Coat_of_arms_of_Mauritius_%28Original_version%29.svg/1920px-Coat_of_arms_of_Mauritius_%28Original_version%29.svg.png"
+    ],
+    "size": 3584,
+    "pool_factor": 2
+  }
+}
