@@ -120,9 +120,10 @@ class ColPaliModelHandler:
                 embedding = self.gpu_pool[device]["model"](**batch_images)
 
             if pool_factor > 1:
-                token_pooler = HierarchicalTokenPooler(pool_factor=pool_factor)
+                token_pooler = HierarchicalTokenPooler()
                 embedding = token_pooler.pool_embeddings(
                     embedding,
+                    pool_factor=pool_factor,
                     padding=True,
                     padding_side=self.gpu_pool[device]["processor"].tokenizer.padding_side,
                 ).cpu().float().numpy().tolist()
